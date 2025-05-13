@@ -2,12 +2,22 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import axios from "axios";
 import "./env.js";
 
 const app = express();
 const PORT = 8000;
 const JWT_SECRET = process.env.JWT_SECRET;
+const USER_SERVICE_IP = process.env.USER_SERVICE_IP;
+const CONTENT_SERVICE_IP = process.env.CONTENT_SERVICE_IP;
 app.use(cors());
+
+let protectedRoutes = [];
+
+const fetchProtectRoutes = async () => {
+  const response = await axios.get(`${USER_SERVICE_IP}/protectURL`);
+  protectedRoutes = response.data.protectedRoutes;
+};
 
 const authenticationToken = (req, res, next) => {
   const authHeader = req.header("authorization");
@@ -24,8 +34,6 @@ const authenticationToken = (req, res, next) => {
   });
 };
 
-const protectedRoutes = ["/profile", "/update-profile", "/change-password"];
-
 app.use(
   "/UserService",
   (req, res, next) => {
@@ -39,7 +47,7 @@ app.use(
     next();
   },
   createProxyMiddleware({
-    target: "http://localhost:8001",
+    target: `${USER_SERVICE_IP}`,
     changeOrigin: true,
     pathRewrite: {
       "^/UserService": "",
@@ -50,7 +58,7 @@ app.use(
 app.use(
   "/ContentService",
   createProxyMiddleware({
-    target: "http://localhost:8002",
+    target: `${CONTENT_SERVICE_IP}`,
     changeOrigin: true,
     pathRewrite: {
       "^/ContentService": "",
@@ -59,5 +67,6 @@ app.use(
 );
 
 app.listen(PORT, () => {
+  fetchProtectRoutes();
   console.log(`API Gateway running at http://localhost:${PORT}`);
 });
