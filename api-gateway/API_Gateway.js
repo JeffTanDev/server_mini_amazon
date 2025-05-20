@@ -10,6 +10,7 @@ const PORT = 8000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const USER_SERVICE_IP = process.env.USER_SERVICE_IP;
 const CONTENT_SERVICE_IP = process.env.CONTENT_SERVICE_IP;
+const PRODUCT_SERVICE_IP = process.env.PRODUCT_SERVICE_IP;
 app.use(cors());
 
 let protectedRoutes = [];
@@ -51,6 +52,27 @@ app.use(
     changeOrigin: true,
     pathRewrite: {
       "^/UserService": "",
+    },
+  })
+);
+
+app.use(
+  "/ProductService",
+  (req, res, next) => {
+    if (
+      protectedRoutes.some((route) => {
+        return req.path.startsWith(route);
+      })
+    ) {
+      return authenticationToken(req, res, next);
+    }
+    next();
+  },
+  createProxyMiddleware({
+    target: `${PRODUCT_SERVICE_IP}`,
+    changeOrigin: true,
+    pathRewrite: {
+      "^/ProductService": "",
     },
   })
 );

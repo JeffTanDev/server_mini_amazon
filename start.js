@@ -43,6 +43,11 @@ async function startAllServices() {
       join(__dirname, "UserService/UserService.js")
     );
 
+    await startService(
+      "ProductService",
+      join(__dirname, "ProductService/ProductService.js")
+    );
+
     // finally start API Gateway
     await startService(
       "API Gateway",
