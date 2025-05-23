@@ -3,6 +3,7 @@ import { mockProducts } from "./mockProducts.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import searchService from "./services/SearchService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,12 +32,20 @@ app.get("/images/:id", async (req, res) => {
   res.status(200).json(imgURL);
 });
 
-app.get("/search", (req, res) => {
+app.get("/search", async (req, res) => {
   const query = req.query.q?.toLowerCase();
   if (!query) {
-    res.status(400).json({ message: "Missing search query" });
+    return res.status(400).json({ message: "Missing search query" });
   }
-  res.status(200).json(mockProducts);
+
+  try {
+    const results = searchService.search(query);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Search error:", error);
+    const results = searchService.fallbackSearch(query);
+    res.status(200).json(results);
+  }
 });
 
 app.get("/getProduct/:id", (req, res) => {
@@ -52,4 +61,10 @@ app.get("/getProduct/:id", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Product Service running at http://localhost:${PORT}`);
+  try {
+    searchService.initialize(mockProducts);
+    console.log("Search engine initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize search engine:", error);
+  }
 });
