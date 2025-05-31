@@ -3,7 +3,12 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import axios from "axios";
+import path from "path";
+import { fileURLToPath } from "url";
 import "./env.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 8000;
@@ -12,6 +17,9 @@ const USER_SERVICE_IP = process.env.USER_SERVICE_IP;
 const CONTENT_SERVICE_IP = process.env.CONTENT_SERVICE_IP;
 const PRODUCT_SERVICE_IP = process.env.PRODUCT_SERVICE_IP;
 app.use(cors());
+
+// add static file service
+app.use(express.static(path.join(__dirname, '../public')));
 
 let protectedRoutes = [];
 
@@ -87,6 +95,11 @@ app.use(
     },
   })
 );
+
+// modify wildcard route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 app.listen(PORT, () => {
   fetchProtectRoutes();
